@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p src/routes src/services client/src/pages client/src/components tests)",
+      "Bash(npm init *)",
+      "Bash(npm install *)",
+      "Bash(npx tailwindcss *)",
+      "Bash(./node_modules/.bin/tailwindcss init *)",
+      "Bash(node *)",
+      "Bash(node_modules/tailwindcss/bin/tailwindcss.js init *)",
+      "Bash(node_modules/.bin/tailwindcss init *)",
+      "Bash(npm test *)"
+    ]
+  }
+}

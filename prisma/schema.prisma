@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Dashboard {
+  id         String   @id @default(uuid())
+  token      String   @unique
+  ownerEmail String?
+  createdAt  DateTime @default(now())
+  cars       Car[]
+}
+
+model Car {
+  id                    String            @id @default(uuid())
+  dashboardId           String
+  dashboard             Dashboard         @relation(fields: [dashboardId], references: [id])
+  label                 String
+  licensePlate          String
+  lastServiceDate       DateTime
+  lastServiceKm         Int
+  currentKm             Int
+  serviceIntervalMonths Int
+  serviceIntervalKm     Int
+  nextTestDate          DateTime
+  updatedAt             DateTime          @updatedAt
+  notificationLogs      NotificationLog[]
+}
+
+enum AlertType {
+  TEST_30D
+  TEST_14D
+  TEST_OVERDUE
+  SERVICE_DATE_30D
+  SERVICE_DATE_14D
+  SERVICE_DATE_OVERDUE
+  SERVICE_KM_1000
+  SERVICE_KM_300
+}
+
+model NotificationLog {
+  id        String    @id @default(uuid())
+  carId     String
+  car       Car       @relation(fields: [carId], references: [id], onDelete: Cascade)
+  alertType AlertType
+  sentAt    DateTime  @default(now())
+}
