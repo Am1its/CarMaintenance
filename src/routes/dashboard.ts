@@ -1,8 +1,23 @@
 import { Router } from 'express'
 import { prisma } from '../db'
 import { nextServiceDate, kmRemaining, daysUntil, carStatus } from '../services/calculations'
+import crypto from 'crypto'
 
 const router = Router()
+
+router.post('/start', async (req, res) => {
+  const { email } = req.body
+  if (!email || !email.includes('@')) {
+    res.status(400).json({ error: 'Invalid email' })
+    return
+  }
+  let dashboard = await prisma.dashboard.findFirst({ where: { ownerEmail: email } })
+  if (!dashboard) {
+    const token = crypto.randomBytes(16).toString('hex')
+    dashboard = await prisma.dashboard.create({ data: { token, ownerEmail: email } })
+  }
+  res.json({ token: dashboard.token })
+})
 
 router.get('/:token', async (req, res) => {
   const dashboard = await prisma.dashboard.findUnique({

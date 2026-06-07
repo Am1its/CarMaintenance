@@ -54,6 +54,16 @@ export async function deleteCar(token: string, carId: string) {
   return res.json()
 }
 
+export async function startByEmail(email: string) {
+  const res = await fetch(`${base}/d/start`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  })
+  if (!res.ok) throw new Error('Failed to start')
+  return res.json() as Promise<{ token: string }>
+}
+
 export async function createDashboard(adminSecret: string) {
   const res = await fetch(`${base}/admin/dashboards`, {
     method: 'POST',

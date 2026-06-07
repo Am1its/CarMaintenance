@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { getDashboard, setEmail } from '../api'
+import { getDashboard } from '../api'
 import CarCard from '../components/CarCard'
 import CarForm from '../components/CarForm'
 
@@ -29,7 +29,6 @@ type DashboardData = {
 export default function Dashboard() {
   const { token } = useParams<{ token: string }>()
   const [data, setData] = useState<DashboardData | null>(null)
-  const [emailInput, setEmailInput] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editingCar, setEditingCar] = useState<Car | null>(null)
 
@@ -41,41 +40,10 @@ export default function Dashboard() {
 
   useEffect(() => { load() }, [token])
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!token) return
-    await setEmail(token, emailInput)
-    load()
-  }
-
   if (!data) {
     return (
       <div className="flex items-center justify-center h-screen text-gray-500">
         טוען...
-      </div>
-    )
-  }
-
-  if (!data.ownerEmail) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4" dir="rtl">
-        <div className="bg-white rounded-2xl shadow p-8 w-full max-w-sm text-center">
-          <h1 className="text-2xl font-bold mb-2">ברוך הבא</h1>
-          <p className="text-gray-500 mb-6">מה כתובת האימייל שלך?</p>
-          <form onSubmit={handleEmailSubmit} className="space-y-4">
-            <input
-              type="email"
-              className="input"
-              placeholder="your@email.com"
-              value={emailInput}
-              onChange={e => setEmailInput(e.target.value)}
-              required
-            />
-            <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium">
-              אישור
-            </button>
-          </form>
-        </div>
       </div>
     )
   }
