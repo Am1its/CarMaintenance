@@ -1,6 +1,10 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+let _resend: Resend | null = null
+function getResend() {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY)
+  return _resend
+}
 
 type CarAlert = {
   label: string
@@ -39,7 +43,7 @@ export async function sendMaintenanceAlert(
     )
     .join('')
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: 'תזכורת רכב <no-reply@yourdomain.com>',
     to: toEmail,
     subject: 'תזכורת תחזוקת רכב',
