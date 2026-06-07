@@ -19,7 +19,7 @@ app.use('/api/d/:token/cars', carRoutes)
 
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'client')))
-  app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'client', 'index.html')))
+  app.use((_req, res) => res.sendFile(path.join(__dirname, 'client', 'index.html')))
 }
 
 const PORT = process.env.PORT ?? 3000
