@@ -19,6 +19,7 @@ type Car = {
   serviceIntervalKm: number
   nextTestDate: string
   photoUrl?: string | null
+  serviceLogs?: { id: string; type: 'SERVICE_DONE' | 'TEST_DONE'; km: number | null; createdAt: string }[]
 }
 
 type DashboardData = {

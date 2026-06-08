@@ -30,6 +30,7 @@ model Car {
   photoUrl              String?
   updatedAt             DateTime          @updatedAt
   notificationLogs      NotificationLog[]
+  serviceLogs           ServiceLog[]
 }
 
 enum AlertType {
@@ -41,6 +42,20 @@ enum AlertType {
   SERVICE_DATE_OVERDUE
   SERVICE_KM_1000
   SERVICE_KM_300
+}
+
+enum LogType {
+  SERVICE_DONE
+  TEST_DONE
+}
+
+model ServiceLog {
+  id        String   @id @default(uuid())
+  carId     String
+  car       Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  type      LogType
+  km        Int?
+  createdAt DateTime @default(now())
 }
 
 model NotificationLog {

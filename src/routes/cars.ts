@@ -63,6 +63,7 @@ router.post('/:carId/service-done', async (req: Request<CarParams>, res: Respons
   await prisma.notificationLog.deleteMany({
     where: { carId: car.id, alertType: { in: SERVICE_ALERT_TYPES as any } },
   })
+  await prisma.serviceLog.create({ data: { carId: car.id, type: 'SERVICE_DONE', km: car.currentKm } })
   const updated = await prisma.car.update({
     where: { id: car.id },
     data: { lastServiceDate: new Date(), lastServiceKm: car.currentKm },
@@ -78,6 +79,7 @@ router.post('/:carId/test-done', async (req: Request<CarParams>, res: Response) 
   await prisma.notificationLog.deleteMany({
     where: { carId: req.params.carId, alertType: { in: TEST_ALERT_TYPES as any } },
   })
+  await prisma.serviceLog.create({ data: { carId: req.params.carId, type: 'TEST_DONE' } })
   const nextTest = new Date()
   nextTest.setFullYear(nextTest.getFullYear() + 1)
   const updated = await prisma.car.update({

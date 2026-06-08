@@ -2,6 +2,13 @@ import { useState } from 'react'
 import StatusPill from './StatusPill'
 import { markServiceDone, markTestDone, deleteCar } from '../api'
 
+type ServiceLog = {
+  id: string
+  type: 'SERVICE_DONE' | 'TEST_DONE'
+  km: number | null
+  createdAt: string
+}
+
 type Car = {
   id: string
   label: string
@@ -12,6 +19,7 @@ type Car = {
   daysUntilServiceDate: number
   serviceIntervalKm: number
   photoUrl?: string | null
+  serviceLogs?: ServiceLog[]
 }
 
 type Props = {
@@ -47,8 +55,13 @@ function DaysBadge({ days, label }: { days: number; label: string }) {
   )
 }
 
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric', year: 'numeric' })
+}
+
 export default function CarCard({ car, token, onRefresh, onEdit }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
 
   const handleServiceDone = async () => {
     await markServiceDone(token, car.id)
@@ -64,6 +77,8 @@ export default function CarCard({ car, token, onRefresh, onEdit }: Props) {
     await deleteCar(token, car.id)
     onRefresh()
   }
+
+  const logs = car.serviceLogs ?? []
 
   return (
     <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 border-r-4 ${borderColor[car.status]} mb-3 overflow-hidden`} dir="rtl">
@@ -86,13 +101,8 @@ export default function CarCard({ car, token, onRefresh, onEdit }: Props) {
 
       {/* Stats */}
       <div className="px-4 pt-3 pb-1 space-y-3">
-        {/* Test */}
         <DaysBadge days={car.daysUntilTest} label="טסט שנתי" />
-
-        {/* Service by date */}
         <DaysBadge days={car.daysUntilServiceDate} label="טיפול (תאריך)" />
-
-        {/* Service by KM */}
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-400">טיפול (ק"מ)</span>
@@ -106,9 +116,38 @@ export default function CarCard({ car, token, onRefresh, onEdit }: Props) {
         </div>
       </div>
 
+      {/* History toggle */}
+      {logs.length > 0 && (
+        <>
+          <div className="h-px bg-gray-50 mx-4 mt-3" />
+          <button
+            onClick={() => setShowHistory(h => !h)}
+            className="w-full flex items-center justify-between px-4 py-2 text-xs text-gray-400 active:bg-gray-50"
+          >
+            <span>{showHistory ? '▲' : '▼'}</span>
+            <span>היסטוריה ({logs.length})</span>
+          </button>
+
+          {showHistory && (
+            <div className="px-4 pb-3 space-y-2">
+              {logs.map(log => (
+                <div key={log.id} className="flex items-center justify-between text-xs py-1 border-b border-gray-50 last:border-0">
+                  <span className="text-gray-400">{formatDate(log.createdAt)}</span>
+                  <span className="text-gray-700">
+                    {log.type === 'SERVICE_DONE'
+                      ? `🔧 טיפול בוצע${log.km ? ` — ${log.km.toLocaleString()} ק״מ` : ''}`
+                      : '✓ טסט עבר'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
       {/* Actions */}
       {confirmDelete ? (
-        <div className="flex items-center gap-2 px-4 py-3">
+        <div className="flex items-center gap-2 px-4 py-3 border-t border-gray-50">
           <span className="text-sm text-gray-600 flex-1 text-right">בטוח למחוק?</span>
           <button
             onClick={handleDelete}
@@ -124,7 +163,7 @@ export default function CarCard({ car, token, onRefresh, onEdit }: Props) {
           </button>
         </div>
       ) : (
-        <div className="flex gap-2 px-4 py-3">
+        <div className="flex gap-2 px-4 py-3 border-t border-gray-50">
           <button
             onClick={handleServiceDone}
             className="flex-1 bg-blue-600 text-white text-xs font-semibold py-2 rounded-xl hover:bg-blue-700 transition-colors"

@@ -22,7 +22,13 @@ router.post('/start', async (req, res) => {
 router.get('/:token', async (req, res) => {
   const dashboard = await prisma.dashboard.findUnique({
     where: { token: req.params.token },
-    include: { cars: true },
+    include: {
+      cars: {
+        include: {
+          serviceLogs: { orderBy: { createdAt: 'desc' }, take: 10 },
+        },
+      },
+    },
   })
   if (!dashboard) {
     res.status(404).json({ error: 'Not found' })
