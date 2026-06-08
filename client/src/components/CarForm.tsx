@@ -155,6 +155,7 @@ export default function CarForm({ token, initial, onSave, onCancel }: Props) {
         <div>
           <label className="block text-sm mb-1">מרווח טיפול — מרחק</label>
           <select className="input" value={form.serviceIntervalKm} onChange={e => set('serviceIntervalKm', +e.target.value)}>
+            <option value={5000}>5,000 ק"מ</option>
             <option value={6000}>6,000 ק"מ</option>
             <option value={10000}>10,000 ק"מ</option>
           </select>
