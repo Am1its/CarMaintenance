@@ -27,6 +27,7 @@ model Car {
   serviceIntervalMonths Int
   serviceIntervalKm     Int
   nextTestDate          DateTime
+  photoUrl              String?
   updatedAt             DateTime          @updatedAt
   notificationLogs      NotificationLog[]
 }

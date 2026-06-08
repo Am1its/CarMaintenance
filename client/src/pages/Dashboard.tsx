@@ -18,6 +18,7 @@ type Car = {
   serviceIntervalMonths: number
   serviceIntervalKm: number
   nextTestDate: string
+  photoUrl?: string | null
 }
 
 type DashboardData = {

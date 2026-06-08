@@ -16,8 +16,16 @@ async function dashboardOwnsCar(token: string, carId: string): Promise<boolean> 
   return car !== null
 }
 
-function parseDates(body: Record<string, any>) {
-  const result = { ...body }
+const ALLOWED_CAR_FIELDS = [
+  'label', 'licensePlate', 'lastServiceDate', 'lastServiceKm',
+  'currentKm', 'serviceIntervalMonths', 'serviceIntervalKm', 'nextTestDate', 'photoUrl',
+]
+
+function parseCarData(body: Record<string, any>) {
+  const result: Record<string, any> = {}
+  for (const key of ALLOWED_CAR_FIELDS) {
+    if (key in body) result[key] = body[key]
+  }
   if (result.lastServiceDate) result.lastServiceDate = new Date(result.lastServiceDate)
   if (result.nextTestDate) result.nextTestDate = new Date(result.nextTestDate)
   return result
@@ -29,7 +37,7 @@ router.post('/', async (req: Request<CarParams>, res: Response) => {
     res.status(404).json({ error: 'Not found' })
     return
   }
-  const car = await prisma.car.create({ data: { ...parseDates(req.body), dashboardId: dashboard.id } as any })
+  const car = await prisma.car.create({ data: { ...parseCarData(req.body), dashboardId: dashboard.id } as any })
   res.json(car)
 })
 
@@ -38,7 +46,7 @@ router.put('/:carId', async (req: Request<CarParams>, res: Response) => {
     res.status(404).json({ error: 'Not found' })
     return
   }
-  const car = await prisma.car.update({ where: { id: req.params.carId }, data: parseDates(req.body) as any })
+  const car = await prisma.car.update({ where: { id: req.params.carId }, data: parseCarData(req.body) as any })
   res.json(car)
 })
 

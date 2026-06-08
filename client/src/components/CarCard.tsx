@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import StatusPill from './StatusPill'
-import { markServiceDone, markTestDone } from '../api'
+import { markServiceDone, markTestDone, deleteCar } from '../api'
 
 type Car = {
   id: string
@@ -10,6 +11,7 @@ type Car = {
   kmRemainingService: number
   daysUntilServiceDate: number
   serviceIntervalKm: number
+  photoUrl?: string | null
 }
 
 type Props = {
@@ -46,6 +48,8 @@ function DaysBadge({ days, label }: { days: number; label: string }) {
 }
 
 export default function CarCard({ car, token, onRefresh, onEdit }: Props) {
+  const [confirmDelete, setConfirmDelete] = useState(false)
+
   const handleServiceDone = async () => {
     await markServiceDone(token, car.id)
     onRefresh()
@@ -56,8 +60,18 @@ export default function CarCard({ car, token, onRefresh, onEdit }: Props) {
     onRefresh()
   }
 
+  const handleDelete = async () => {
+    await deleteCar(token, car.id)
+    onRefresh()
+  }
+
   return (
     <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 border-r-4 ${borderColor[car.status]} mb-3 overflow-hidden`} dir="rtl">
+      {/* Photo banner */}
+      {car.photoUrl && (
+        <img src={car.photoUrl} alt={car.label} className="w-full h-36 object-cover" />
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between p-4 pb-3">
         <StatusPill status={car.status} />
@@ -93,26 +107,50 @@ export default function CarCard({ car, token, onRefresh, onEdit }: Props) {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2 px-4 py-3">
-        <button
-          onClick={handleServiceDone}
-          className="flex-1 bg-blue-600 text-white text-xs font-semibold py-2 rounded-xl hover:bg-blue-700 transition-colors"
-        >
-          ✓ טיפול בוצע
-        </button>
-        <button
-          onClick={handleTestDone}
-          className="flex-1 bg-gray-800 text-white text-xs font-semibold py-2 rounded-xl hover:bg-gray-700 transition-colors"
-        >
-          ✓ טסט בוצע
-        </button>
-        <button
-          onClick={() => onEdit(car)}
-          className="px-3 py-2 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors text-xs"
-        >
-          עריכה
-        </button>
-      </div>
+      {confirmDelete ? (
+        <div className="flex items-center gap-2 px-4 py-3">
+          <span className="text-sm text-gray-600 flex-1 text-right">בטוח למחוק?</span>
+          <button
+            onClick={handleDelete}
+            className="px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-semibold"
+          >
+            מחק
+          </button>
+          <button
+            onClick={() => setConfirmDelete(false)}
+            className="px-3 py-2 rounded-xl border border-gray-200 text-gray-500 text-xs"
+          >
+            ביטול
+          </button>
+        </div>
+      ) : (
+        <div className="flex gap-2 px-4 py-3">
+          <button
+            onClick={handleServiceDone}
+            className="flex-1 bg-blue-600 text-white text-xs font-semibold py-2 rounded-xl hover:bg-blue-700 transition-colors"
+          >
+            ✓ טיפול בוצע
+          </button>
+          <button
+            onClick={handleTestDone}
+            className="flex-1 bg-gray-800 text-white text-xs font-semibold py-2 rounded-xl hover:bg-gray-700 transition-colors"
+          >
+            ✓ טסט בוצע
+          </button>
+          <button
+            onClick={() => onEdit(car)}
+            className="px-3 py-2 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors text-xs"
+          >
+            עריכה
+          </button>
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="px-3 py-2 rounded-xl border border-red-200 text-red-500 hover:bg-red-50 transition-colors text-xs"
+          >
+            מחק
+          </button>
+        </div>
+      )}
     </div>
   )
 }
