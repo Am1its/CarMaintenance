@@ -20,8 +20,6 @@ type StatusInput = {
   daysUntilServiceDate: number | null
   kmRemainingService: number | null
   daysUntilTest: number | null
-  daysUntilBattery?: number | null
-  kmRemainingBattery?: number | null
 }
 
 export type CarStatusResult = 'ok' | 'approaching' | 'due'
@@ -30,12 +28,10 @@ export function carStatus(input: StatusInput): CarStatusResult {
   const dayValues = [
     input.daysUntilServiceDate,
     input.daysUntilTest,
-    input.daysUntilBattery ?? null,
   ].filter((v): v is number => v !== null && v !== undefined)
 
   const kmValues = [
     input.kmRemainingService,
-    input.kmRemainingBattery ?? null,
   ].filter((v): v is number => v !== null && v !== undefined)
 
   if (dayValues.some(d => d <= 0) || kmValues.some(k => k <= 0)) return 'due'

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { addCarTask, toggleCarTask, deleteCarTask, updateCar } from '../api'
 
 type Task = {
@@ -12,7 +12,7 @@ type Props = {
   car: { id: string; label: string; notes: string | null }
   token: string
   initialTasks: Task[]
-  onClose: () => void
+  onClose: (dirty: boolean) => void
 }
 
 export default function CarTasksModal({ car, token, initialTasks, onClose }: Props) {
@@ -20,6 +20,7 @@ export default function CarTasksModal({ car, token, initialTasks, onClose }: Pro
   const [notes, setNotes] = useState(car.notes ?? '')
   const [notesDirty, setNotesDirty] = useState(false)
   const [newTaskText, setNewTaskText] = useState('')
+  const wasMutated = useRef(false)
 
   const activeTasks = tasks.filter(t => !t.isDone)
   const doneTasks = tasks.filter(t => t.isDone)
@@ -30,21 +31,25 @@ export default function CarTasksModal({ car, token, initialTasks, onClose }: Pro
     const task = await addCarTask(token, car.id, text)
     setTasks(ts => [...ts, task])
     setNewTaskText('')
+    wasMutated.current = true
   }
 
   const handleToggle = async (task: Task) => {
     await toggleCarTask(token, car.id, task.id, !task.isDone)
     setTasks(ts => ts.map(t => t.id === task.id ? { ...t, isDone: !t.isDone } : t))
+    wasMutated.current = true
   }
 
   const handleDeleteTask = async (taskId: string) => {
     await deleteCarTask(token, car.id, taskId)
     setTasks(ts => ts.filter(t => t.id !== taskId))
+    wasMutated.current = true
   }
 
   const handleSaveNotes = async () => {
     await updateCar(token, car.id, { notes: notes || null })
     setNotesDirty(false)
+    wasMutated.current = true
   }
 
   return (
@@ -52,7 +57,7 @@ export default function CarTasksModal({ car, token, initialTasks, onClose }: Pro
       <div className="bg-white rounded-2xl w-full max-w-lg flex flex-col overflow-hidden" style={{ maxHeight: '85vh' }}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
-          <button onClick={onClose} className="text-gray-400 text-lg leading-none p-1">✕</button>
+          <button onClick={() => onClose(wasMutated.current)} className="text-gray-400 text-lg leading-none p-1">✕</button>
           <h2 className="font-bold text-base">{car.label}</h2>
         </div>
 

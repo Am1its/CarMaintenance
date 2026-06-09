@@ -19,7 +19,7 @@ async function dashboardOwnsCar(token: string, carId: string): Promise<boolean> 
 const ALLOWED_CAR_FIELDS = [
   'label', 'licensePlate', 'lastServiceDate', 'lastServiceKm',
   'currentKm', 'serviceIntervalMonths', 'serviceIntervalKm', 'nextTestDate',
-  'trackBattery', 'lastBatteryDate', 'lastBatteryKm', 'notes', 'photoUrl',
+  'notes', 'photoUrl',
 ]
 
 function parseCarData(body: Record<string, any>) {
@@ -29,7 +29,6 @@ function parseCarData(body: Record<string, any>) {
   }
   if (result.lastServiceDate) result.lastServiceDate = new Date(result.lastServiceDate)
   if (result.nextTestDate) result.nextTestDate = new Date(result.nextTestDate)
-  if (result.lastBatteryDate) result.lastBatteryDate = new Date(result.lastBatteryDate)
   return result
 }
 
@@ -87,24 +86,6 @@ router.post('/:carId/test-done', async (req: Request<CarParams>, res: Response) 
   const updated = await prisma.car.update({
     where: { id: req.params.carId },
     data: { nextTestDate: nextTest },
-  })
-  res.json(updated)
-})
-
-router.post('/:carId/battery-done', async (req: Request<CarParams>, res: Response) => {
-  if (!await dashboardOwnsCar(req.params.token, req.params.carId)) {
-    res.status(404).json({ error: 'Not found' })
-    return
-  }
-  const car = await prisma.car.findUnique({ where: { id: req.params.carId } })
-  if (!car) {
-    res.status(404).json({ error: 'Not found' })
-    return
-  }
-  await prisma.serviceLog.create({ data: { carId: car.id, type: 'BATTERY_DONE', km: car.currentKm } })
-  const updated = await prisma.car.update({
-    where: { id: car.id },
-    data: { lastBatteryDate: new Date(), lastBatteryKm: car.currentKm },
   })
   res.json(updated)
 })

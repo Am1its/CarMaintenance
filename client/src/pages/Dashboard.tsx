@@ -25,14 +25,9 @@ type Car = {
   serviceIntervalMonths: number
   serviceIntervalKm: number
   nextTestDate: string | null
-  trackBattery: boolean
-  lastBatteryDate: string | null
-  lastBatteryKm: number | null
-  daysUntilBattery: number | null
-  kmRemainingBattery: number | null
   notes: string | null
   photoUrl?: string | null
-  serviceLogs?: { id: string; type: 'SERVICE_DONE' | 'TEST_DONE' | 'BATTERY_DONE'; km: number | null; createdAt: string }[]
+  serviceLogs?: { id: string; type: 'SERVICE_DONE' | 'TEST_DONE'; km: number | null; createdAt: string }[]
   carTasks?: CarTask[]
 }
 
@@ -71,7 +66,6 @@ export default function Dashboard() {
     ...editingCar,
     lastServiceDate: editingCar.lastServiceDate?.slice(0, 10) ?? '',
     nextTestDate: editingCar.nextTestDate?.slice(0, 10) ?? '',
-    lastBatteryDate: editingCar.lastBatteryDate?.slice(0, 10) ?? '',
   } : undefined
 
   const dueCount = data.cars.filter(c => c.status === 'due').length

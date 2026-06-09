@@ -27,9 +27,6 @@ model Car {
   serviceIntervalMonths Int               @default(6)
   serviceIntervalKm     Int               @default(10000)
   nextTestDate          DateTime?
-  trackBattery          Boolean           @default(false)
-  lastBatteryDate       DateTime?
-  lastBatteryKm         Int?
   notes                 String?
   photoUrl              String?
   updatedAt             DateTime          @updatedAt
@@ -52,7 +49,6 @@ enum AlertType {
 enum LogType {
   SERVICE_DONE
   TEST_DONE
-  BATTERY_DONE
 }
 
 model ServiceLog {

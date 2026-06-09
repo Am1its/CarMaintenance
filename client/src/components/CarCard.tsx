@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import StatusPill from './StatusPill'
 import CarTasksModal from './CarTasksModal'
-import { markServiceDone, markTestDone, markBatteryDone, deleteCar } from '../api'
+import { markServiceDone, markTestDone, deleteCar } from '../api'
 
 type ServiceLog = {
   id: string
-  type: 'SERVICE_DONE' | 'TEST_DONE' | 'BATTERY_DONE'
+  type: 'SERVICE_DONE' | 'TEST_DONE'
   km: number | null
   createdAt: string
 }
@@ -26,9 +26,6 @@ type Car = {
   kmRemainingService: number | null
   daysUntilServiceDate: number | null
   serviceIntervalKm: number
-  trackBattery: boolean
-  daysUntilBattery: number | null
-  kmRemainingBattery: number | null
   notes: string | null
   photoUrl?: string | null
   serviceLogs?: ServiceLog[]
@@ -43,7 +40,6 @@ type Props = {
 }
 
 const borderColor = { ok: 'border-r-green-400', approaching: 'border-r-amber-400', due: 'border-r-red-400' }
-const BATTERY_INTERVAL_KM = 15000
 
 function KmBar({ remaining, total }: { remaining: number; total: number }) {
   const pct = Math.max(0, Math.min(100, (remaining / total) * 100))
@@ -78,14 +74,12 @@ export default function CarCard({ car, token, onRefresh, onEdit }: Props) {
 
   const handleServiceDone = async () => { await markServiceDone(token, car.id); onRefresh() }
   const handleTestDone = async () => { await markTestDone(token, car.id); onRefresh() }
-  const handleBatteryDone = async () => { await markBatteryDone(token, car.id); onRefresh() }
   const handleDelete = async () => { await deleteCar(token, car.id); onRefresh() }
 
   const logs = car.serviceLogs ?? []
   const tasks = car.carTasks ?? []
   const activeTaskCount = tasks.filter(t => !t.isDone).length
 
-  const hasBattery = car.trackBattery && (car.daysUntilBattery !== null || car.kmRemainingBattery !== null)
   const hasAnyStats = car.daysUntilTest !== null || car.daysUntilServiceDate !== null || car.kmRemainingService !== null
 
   return (
@@ -109,7 +103,7 @@ export default function CarCard({ car, token, onRefresh, onEdit }: Props) {
 
         {/* Stats */}
         <div className="px-4 pt-3 pb-1 space-y-3">
-          {!hasAnyStats && !hasBattery && (
+          {!hasAnyStats && (
             <p className="text-xs text-gray-400 text-center py-1">לא הוגדרו נתוני תחזוקה</p>
           )}
 
@@ -135,27 +129,6 @@ export default function CarCard({ car, token, onRefresh, onEdit }: Props) {
             </div>
           )}
 
-          {hasBattery && (
-            <>
-              <div className="h-px bg-gray-50" />
-              {car.daysUntilBattery !== null && (
-                <DaysBadge days={car.daysUntilBattery} label="🔋 בטרייה (תאריך)" />
-              )}
-              {car.kmRemainingBattery !== null && (
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-400">🔋 בטרייה (ק"מ)</span>
-                    <span className={`text-xs font-semibold ${car.kmRemainingBattery < 0 ? 'text-red-600' : car.kmRemainingBattery <= 1000 ? 'text-amber-600' : 'text-gray-700'}`}>
-                      {car.kmRemainingBattery < 0
-                        ? `עבר ב-${Math.abs(car.kmRemainingBattery).toLocaleString()} ק"מ`
-                        : `נותרו ${car.kmRemainingBattery.toLocaleString()} ק"מ`}
-                    </span>
-                  </div>
-                  <KmBar remaining={car.kmRemainingBattery} total={BATTERY_INTERVAL_KM} />
-                </div>
-              )}
-            </>
-          )}
         </div>
 
         {/* History */}
@@ -177,8 +150,6 @@ export default function CarCard({ car, token, onRefresh, onEdit }: Props) {
                     <span className="text-gray-700">
                       {log.type === 'SERVICE_DONE'
                         ? `🔧 טיפול בוצע${log.km ? ` — ${log.km.toLocaleString()} ק״מ` : ''}`
-                        : log.type === 'BATTERY_DONE'
-                        ? `🔋 בטרייה הוחלפה${log.km ? ` — ${log.km.toLocaleString()} ק״מ` : ''}`
                         : '✓ טסט עבר'}
                     </span>
                   </div>
@@ -205,11 +176,6 @@ export default function CarCard({ car, token, onRefresh, onEdit }: Props) {
               <button onClick={handleTestDone} className="flex-1 bg-gray-800 text-white text-xs font-semibold py-2 rounded-xl">
                 ✓ טסט
               </button>
-              {car.trackBattery && (
-                <button onClick={handleBatteryDone} className="flex-1 bg-amber-500 text-white text-xs font-semibold py-2 rounded-xl">
-                  🔋 בטרייה
-                </button>
-              )}
             </div>
             {/* Row 2: secondary actions */}
             <div className="flex gap-2">
@@ -231,7 +197,7 @@ export default function CarCard({ car, token, onRefresh, onEdit }: Props) {
           car={{ id: car.id, label: car.label, notes: car.notes }}
           token={token}
           initialTasks={tasks}
-          onClose={() => setShowTasks(false)}
+          onClose={(dirty) => { setShowTasks(false); if (dirty) onRefresh() }}
         />
       )}
     </>

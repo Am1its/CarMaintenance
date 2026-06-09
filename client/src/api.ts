@@ -48,12 +48,6 @@ export async function markTestDone(token: string, carId: string) {
   return res.json()
 }
 
-export async function markBatteryDone(token: string, carId: string) {
-  const res = await fetch(`${base}/d/${token}/cars/${carId}/battery-done`, { method: 'POST' })
-  if (!res.ok) throw new Error('Failed to mark battery done')
-  return res.json()
-}
-
 export async function deleteCar(token: string, carId: string) {
   const res = await fetch(`${base}/d/${token}/cars/${carId}`, { method: 'DELETE' })
   if (!res.ok) throw new Error('Failed to delete car')
