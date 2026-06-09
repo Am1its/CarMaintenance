@@ -48,9 +48,41 @@ export async function markTestDone(token: string, carId: string) {
   return res.json()
 }
 
+export async function markBatteryDone(token: string, carId: string) {
+  const res = await fetch(`${base}/d/${token}/cars/${carId}/battery-done`, { method: 'POST' })
+  if (!res.ok) throw new Error('Failed to mark battery done')
+  return res.json()
+}
+
 export async function deleteCar(token: string, carId: string) {
   const res = await fetch(`${base}/d/${token}/cars/${carId}`, { method: 'DELETE' })
   if (!res.ok) throw new Error('Failed to delete car')
+  return res.json()
+}
+
+export async function addCarTask(token: string, carId: string, text: string) {
+  const res = await fetch(`${base}/d/${token}/cars/${carId}/tasks`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  })
+  if (!res.ok) throw new Error('Failed to add task')
+  return res.json()
+}
+
+export async function toggleCarTask(token: string, carId: string, taskId: string, isDone: boolean) {
+  const res = await fetch(`${base}/d/${token}/cars/${carId}/tasks/${taskId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ isDone }),
+  })
+  if (!res.ok) throw new Error('Failed to update task')
+  return res.json()
+}
+
+export async function deleteCarTask(token: string, carId: string, taskId: string) {
+  const res = await fetch(`${base}/d/${token}/cars/${carId}/tasks/${taskId}`, { method: 'DELETE' })
+  if (!res.ok) throw new Error('Failed to delete task')
   return res.json()
 }
 

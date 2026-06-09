@@ -4,12 +4,12 @@ type AlertType = string
 
 type CarWithLogs = {
   id: string
-  lastServiceDate: Date
-  lastServiceKm: number
-  currentKm: number
+  lastServiceDate: Date | null
+  lastServiceKm: number | null
+  currentKm: number | null
   serviceIntervalMonths: number
   serviceIntervalKm: number
-  nextTestDate: Date
+  nextTestDate: Date | null
   notificationLogs: { alertType: AlertType; sentAt: Date }[]
 }
 
@@ -25,33 +25,36 @@ export function getAlertsForCar(car: CarWithLogs, today: Date = new Date()): str
   const alerts: string[] = []
   const logs = car.notificationLogs
 
-  // Test alerts
-  const daysToTest = daysUntil(car.nextTestDate, today)
-  if (daysToTest < 0) {
-    if (!alreadySent(logs, 'TEST_OVERDUE', 7)) alerts.push('TEST_OVERDUE')
-  } else if (daysToTest <= 14) {
-    if (!alreadySent(logs, 'TEST_14D')) alerts.push('TEST_14D')
-  } else if (daysToTest <= 30) {
-    if (!alreadySent(logs, 'TEST_30D')) alerts.push('TEST_30D')
+  if (car.nextTestDate) {
+    const daysToTest = daysUntil(car.nextTestDate, today)
+    if (daysToTest < 0) {
+      if (!alreadySent(logs, 'TEST_OVERDUE', 7)) alerts.push('TEST_OVERDUE')
+    } else if (daysToTest <= 14) {
+      if (!alreadySent(logs, 'TEST_14D')) alerts.push('TEST_14D')
+    } else if (daysToTest <= 30) {
+      if (!alreadySent(logs, 'TEST_30D')) alerts.push('TEST_30D')
+    }
   }
 
-  // Service date alerts
-  const svcDate = nextServiceDate(car.lastServiceDate, car.serviceIntervalMonths)
-  const daysToService = daysUntil(svcDate, today)
-  if (daysToService < 0) {
-    if (!alreadySent(logs, 'SERVICE_DATE_OVERDUE', 7)) alerts.push('SERVICE_DATE_OVERDUE')
-  } else if (daysToService <= 14) {
-    if (!alreadySent(logs, 'SERVICE_DATE_14D')) alerts.push('SERVICE_DATE_14D')
-  } else if (daysToService <= 30) {
-    if (!alreadySent(logs, 'SERVICE_DATE_30D')) alerts.push('SERVICE_DATE_30D')
+  if (car.lastServiceDate) {
+    const svcDate = nextServiceDate(car.lastServiceDate, car.serviceIntervalMonths)
+    const daysToService = daysUntil(svcDate, today)
+    if (daysToService < 0) {
+      if (!alreadySent(logs, 'SERVICE_DATE_OVERDUE', 7)) alerts.push('SERVICE_DATE_OVERDUE')
+    } else if (daysToService <= 14) {
+      if (!alreadySent(logs, 'SERVICE_DATE_14D')) alerts.push('SERVICE_DATE_14D')
+    } else if (daysToService <= 30) {
+      if (!alreadySent(logs, 'SERVICE_DATE_30D')) alerts.push('SERVICE_DATE_30D')
+    }
   }
 
-  // Service KM alerts
-  const kmLeft = kmRemaining(car.lastServiceKm, car.serviceIntervalKm, car.currentKm)
-  if (kmLeft <= 300) {
-    if (!alreadySent(logs, 'SERVICE_KM_300')) alerts.push('SERVICE_KM_300')
-  } else if (kmLeft <= 1000) {
-    if (!alreadySent(logs, 'SERVICE_KM_1000')) alerts.push('SERVICE_KM_1000')
+  if (car.lastServiceKm !== null && car.currentKm !== null) {
+    const kmLeft = kmRemaining(car.lastServiceKm, car.serviceIntervalKm, car.currentKm)
+    if (kmLeft <= 300) {
+      if (!alreadySent(logs, 'SERVICE_KM_300')) alerts.push('SERVICE_KM_300')
+    } else if (kmLeft <= 1000) {
+      if (!alreadySent(logs, 'SERVICE_KM_1000')) alerts.push('SERVICE_KM_1000')
+    }
   }
 
   return alerts

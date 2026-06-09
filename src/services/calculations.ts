@@ -17,15 +17,28 @@ export function daysUntil(targetDate: Date, today: Date = new Date()): number {
 }
 
 type StatusInput = {
-  daysUntilServiceDate: number
-  kmRemainingService: number
-  daysUntilTest: number
+  daysUntilServiceDate: number | null
+  kmRemainingService: number | null
+  daysUntilTest: number | null
+  daysUntilBattery?: number | null
+  kmRemainingBattery?: number | null
 }
 
 export type CarStatusResult = 'ok' | 'approaching' | 'due'
 
-export function carStatus({ daysUntilServiceDate, kmRemainingService, daysUntilTest }: StatusInput): CarStatusResult {
-  if (daysUntilServiceDate <= 0 || kmRemainingService <= 0 || daysUntilTest <= 0) return 'due'
-  if (daysUntilServiceDate <= 30 || kmRemainingService <= 1000 || daysUntilTest <= 30) return 'approaching'
+export function carStatus(input: StatusInput): CarStatusResult {
+  const dayValues = [
+    input.daysUntilServiceDate,
+    input.daysUntilTest,
+    input.daysUntilBattery ?? null,
+  ].filter((v): v is number => v !== null && v !== undefined)
+
+  const kmValues = [
+    input.kmRemainingService,
+    input.kmRemainingBattery ?? null,
+  ].filter((v): v is number => v !== null && v !== undefined)
+
+  if (dayValues.some(d => d <= 0) || kmValues.some(k => k <= 0)) return 'due'
+  if (dayValues.some(d => d <= 30) || kmValues.some(k => k <= 1000)) return 'approaching'
   return 'ok'
 }

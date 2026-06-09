@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { prisma } from '../db'
 
-type CarParams = { token: string; carId: string }
+type CarParams = { token: string; carId: string; taskId: string }
 
 const router = Router({ mergeParams: true })
 
@@ -18,7 +18,8 @@ async function dashboardOwnsCar(token: string, carId: string): Promise<boolean> 
 
 const ALLOWED_CAR_FIELDS = [
   'label', 'licensePlate', 'lastServiceDate', 'lastServiceKm',
-  'currentKm', 'serviceIntervalMonths', 'serviceIntervalKm', 'nextTestDate', 'photoUrl',
+  'currentKm', 'serviceIntervalMonths', 'serviceIntervalKm', 'nextTestDate',
+  'lastBatteryDate', 'lastBatteryKm', 'notes', 'photoUrl',
 ]
 
 function parseCarData(body: Record<string, any>) {
@@ -28,6 +29,7 @@ function parseCarData(body: Record<string, any>) {
   }
   if (result.lastServiceDate) result.lastServiceDate = new Date(result.lastServiceDate)
   if (result.nextTestDate) result.nextTestDate = new Date(result.nextTestDate)
+  if (result.lastBatteryDate) result.lastBatteryDate = new Date(result.lastBatteryDate)
   return result
 }
 
@@ -89,12 +91,64 @@ router.post('/:carId/test-done', async (req: Request<CarParams>, res: Response) 
   res.json(updated)
 })
 
+router.post('/:carId/battery-done', async (req: Request<CarParams>, res: Response) => {
+  if (!await dashboardOwnsCar(req.params.token, req.params.carId)) {
+    res.status(404).json({ error: 'Not found' })
+    return
+  }
+  const car = await prisma.car.findUnique({ where: { id: req.params.carId } })
+  if (!car) {
+    res.status(404).json({ error: 'Not found' })
+    return
+  }
+  await prisma.serviceLog.create({ data: { carId: car.id, type: 'BATTERY_DONE', km: car.currentKm } })
+  const updated = await prisma.car.update({
+    where: { id: car.id },
+    data: { lastBatteryDate: new Date(), lastBatteryKm: car.currentKm },
+  })
+  res.json(updated)
+})
+
 router.delete('/:carId', async (req: Request<CarParams>, res: Response) => {
   if (!await dashboardOwnsCar(req.params.token, req.params.carId)) {
     res.status(404).json({ error: 'Not found' })
     return
   }
   await prisma.car.delete({ where: { id: req.params.carId } })
+  res.json({ ok: true })
+})
+
+// --- Task routes ---
+
+router.post('/:carId/tasks', async (req: Request<CarParams>, res: Response) => {
+  if (!await dashboardOwnsCar(req.params.token, req.params.carId)) {
+    res.status(404).json({ error: 'Not found' })
+    return
+  }
+  const task = await prisma.carTask.create({
+    data: { carId: req.params.carId, text: req.body.text },
+  })
+  res.json(task)
+})
+
+router.patch('/:carId/tasks/:taskId', async (req: Request<CarParams>, res: Response) => {
+  if (!await dashboardOwnsCar(req.params.token, req.params.carId)) {
+    res.status(404).json({ error: 'Not found' })
+    return
+  }
+  const task = await prisma.carTask.update({
+    where: { id: req.params.taskId },
+    data: { isDone: req.body.isDone },
+  })
+  res.json(task)
+})
+
+router.delete('/:carId/tasks/:taskId', async (req: Request<CarParams>, res: Response) => {
+  if (!await dashboardOwnsCar(req.params.token, req.params.carId)) {
+    res.status(404).json({ error: 'Not found' })
+    return
+  }
+  await prisma.carTask.delete({ where: { id: req.params.taskId } })
   res.json({ ok: true })
 })
 

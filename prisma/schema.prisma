@@ -20,17 +20,21 @@ model Car {
   dashboardId           String
   dashboard             Dashboard         @relation(fields: [dashboardId], references: [id])
   label                 String
-  licensePlate          String
-  lastServiceDate       DateTime
-  lastServiceKm         Int
-  currentKm             Int
-  serviceIntervalMonths Int
-  serviceIntervalKm     Int
-  nextTestDate          DateTime
+  licensePlate          String?
+  lastServiceDate       DateTime?
+  lastServiceKm         Int?
+  currentKm             Int?
+  serviceIntervalMonths Int               @default(6)
+  serviceIntervalKm     Int               @default(10000)
+  nextTestDate          DateTime?
+  lastBatteryDate       DateTime?
+  lastBatteryKm         Int?
+  notes                 String?
   photoUrl              String?
   updatedAt             DateTime          @updatedAt
   notificationLogs      NotificationLog[]
   serviceLogs           ServiceLog[]
+  carTasks              CarTask[]
 }
 
 enum AlertType {
@@ -47,6 +51,7 @@ enum AlertType {
 enum LogType {
   SERVICE_DONE
   TEST_DONE
+  BATTERY_DONE
 }
 
 model ServiceLog {
@@ -55,6 +60,15 @@ model ServiceLog {
   car       Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
   type      LogType
   km        Int?
+  createdAt DateTime @default(now())
+}
+
+model CarTask {
+  id        String   @id @default(uuid())
+  carId     String
+  car       Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  text      String
+  isDone    Boolean  @default(false)
   createdAt DateTime @default(now())
 }
 

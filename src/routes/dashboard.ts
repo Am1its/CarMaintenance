@@ -5,6 +5,9 @@ import crypto from 'crypto'
 
 const router = Router()
 
+const BATTERY_INTERVAL_MONTHS = 12
+const BATTERY_INTERVAL_KM = 15000
+
 router.post('/start', async (req, res) => {
   const { email } = req.body
   if (!email || !email.includes('@')) {
@@ -26,6 +29,7 @@ router.get('/:token', async (req, res) => {
       cars: {
         include: {
           serviceLogs: { orderBy: { createdAt: 'desc' }, take: 10 },
+          carTasks: { orderBy: { createdAt: 'asc' } },
         },
       },
     },
@@ -37,17 +41,38 @@ router.get('/:token', async (req, res) => {
 
   const today = new Date()
   const carsWithStatus = dashboard.cars.map(car => {
-    const svcDate = nextServiceDate(car.lastServiceDate, car.serviceIntervalMonths)
-    const kmLeft = kmRemaining(car.lastServiceKm, car.serviceIntervalKm, car.currentKm)
-    const daysToService = daysUntil(svcDate, today)
-    const daysToTest = daysUntil(car.nextTestDate, today)
+    const svcDate = car.lastServiceDate
+      ? nextServiceDate(car.lastServiceDate, car.serviceIntervalMonths)
+      : null
+    const kmLeft = (car.lastServiceKm !== null && car.currentKm !== null)
+      ? kmRemaining(car.lastServiceKm, car.serviceIntervalKm, car.currentKm)
+      : null
+    const daysToService = svcDate ? daysUntil(svcDate, today) : null
+    const daysToTest = car.nextTestDate ? daysUntil(car.nextTestDate, today) : null
+
+    const batteryDate = car.lastBatteryDate
+      ? nextServiceDate(car.lastBatteryDate, BATTERY_INTERVAL_MONTHS)
+      : null
+    const kmLeftBattery = (car.lastBatteryKm !== null && car.currentKm !== null)
+      ? kmRemaining(car.lastBatteryKm, BATTERY_INTERVAL_KM, car.currentKm)
+      : null
+    const daysUntilBattery = batteryDate ? daysUntil(batteryDate, today) : null
+
     return {
       ...car,
       nextServiceDate: svcDate,
       kmRemainingService: kmLeft,
       daysUntilServiceDate: daysToService,
       daysUntilTest: daysToTest,
-      status: carStatus({ daysUntilServiceDate: daysToService, kmRemainingService: kmLeft, daysUntilTest: daysToTest }),
+      daysUntilBattery,
+      kmRemainingBattery: kmLeftBattery,
+      status: carStatus({
+        daysUntilServiceDate: daysToService,
+        kmRemainingService: kmLeft,
+        daysUntilTest: daysToTest,
+        daysUntilBattery,
+        kmRemainingBattery: kmLeftBattery,
+      }),
     }
   })
 

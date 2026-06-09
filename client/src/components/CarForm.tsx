@@ -6,25 +6,27 @@ type CarInput = {
   label: string
   licensePlate: string
   lastServiceDate: string
-  lastServiceKm: number
-  currentKm: number
+  lastServiceKm: number | null
+  currentKm: number | null
   serviceIntervalMonths: number
   serviceIntervalKm: number
   nextTestDate: string
+  lastBatteryDate: string
+  lastBatteryKm: number | null
   photoUrl?: string | null
 }
 
 type Props = {
   token: string
-  initial?: CarInput
+  initial?: Partial<CarInput>
   onSave: () => void
   onCancel: () => void
 }
 
 const empty: CarInput = {
-  label: '', licensePlate: '', lastServiceDate: '', lastServiceKm: 0,
-  currentKm: 0, serviceIntervalMonths: 6, serviceIntervalKm: 6000, nextTestDate: '',
-  photoUrl: null,
+  label: '', licensePlate: '', lastServiceDate: '', lastServiceKm: null,
+  currentKm: null, serviceIntervalMonths: 6, serviceIntervalKm: 10000, nextTestDate: '',
+  lastBatteryDate: '', lastBatteryKm: null, photoUrl: null,
 }
 
 async function compressImage(file: File): Promise<string> {
@@ -48,10 +50,18 @@ async function compressImage(file: File): Promise<string> {
 }
 
 export default function CarForm({ token, initial, onSave, onCancel }: Props) {
-  const [form, setForm] = useState<CarInput>(initial ?? empty)
+  const [form, setForm] = useState<CarInput>({ ...empty, ...initial })
 
   const set = (key: keyof CarInput, value: string | number | null) =>
     setForm(f => ({ ...f, [key]: value }))
+
+  const numInput = (key: keyof CarInput) => ({
+    type: 'number' as const,
+    className: 'input',
+    value: (form[key] as number | null) ?? '',
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+      set(key, e.target.value === '' ? null : +e.target.value),
+  })
 
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -62,15 +72,17 @@ export default function CarForm({ token, initial, onSave, onCancel }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const payload = {
+    const payload: Record<string, unknown> = {
       label: form.label,
-      licensePlate: form.licensePlate,
-      lastServiceDate: form.lastServiceDate,
+      licensePlate: form.licensePlate || null,
+      lastServiceDate: form.lastServiceDate || null,
       lastServiceKm: form.lastServiceKm,
       currentKm: form.currentKm,
       serviceIntervalMonths: form.serviceIntervalMonths,
       serviceIntervalKm: form.serviceIntervalKm,
-      nextTestDate: form.nextTestDate,
+      nextTestDate: form.nextTestDate || null,
+      lastBatteryDate: form.lastBatteryDate || null,
+      lastBatteryKm: form.lastBatteryKm,
       photoUrl: form.photoUrl ?? null,
     }
     if (form.id) {
@@ -89,7 +101,7 @@ export default function CarForm({ token, initial, onSave, onCancel }: Props) {
       >
         <h2 className="text-xl font-bold">{form.id ? 'עריכת רכב' : 'הוספת רכב'}</h2>
 
-        {/* Photo upload */}
+        {/* Photo */}
         <div>
           <label className="block text-sm mb-1">תמונת רכב</label>
           <label className="block cursor-pointer">
@@ -101,7 +113,7 @@ export default function CarForm({ token, initial, onSave, onCancel }: Props) {
                 </div>
               </div>
             ) : (
-              <div className="w-full h-32 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 text-gray-400 gap-2 active:bg-gray-50">
+              <div className="w-full h-28 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 text-gray-400 gap-2 active:bg-gray-50">
                 <span className="text-2xl">📷</span>
                 <span className="text-xs">הוסף תמונה</span>
               </div>
@@ -109,39 +121,38 @@ export default function CarForm({ token, initial, onSave, onCancel }: Props) {
             <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
           </label>
           {form.photoUrl && (
-            <button
-              type="button"
-              onClick={() => set('photoUrl', null)}
-              className="mt-1 text-xs text-red-500"
-            >
+            <button type="button" onClick={() => set('photoUrl', null)} className="mt-1 text-xs text-red-500">
               הסר תמונה
             </button>
           )}
         </div>
 
         <div>
-          <label className="block text-sm mb-1">סוג / תיאור רכב</label>
+          <label className="block text-sm mb-1">סוג / תיאור רכב <span className="text-red-500">*</span></label>
           <input className="input" value={form.label} onChange={e => set('label', e.target.value)} required />
         </div>
 
         <div>
           <label className="block text-sm mb-1">לוחית רישוי</label>
-          <input className="input" value={form.licensePlate} onChange={e => set('licensePlate', e.target.value)} required />
+          <input className="input" value={form.licensePlate} onChange={e => set('licensePlate', e.target.value)} />
         </div>
+
+        <div className="h-px bg-gray-100" />
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">טיפול</p>
 
         <div>
           <label className="block text-sm mb-1">תאריך טיפול אחרון</label>
-          <input type="date" className="input" value={form.lastServiceDate} onChange={e => set('lastServiceDate', e.target.value)} required />
+          <input type="date" className="input" value={form.lastServiceDate} onChange={e => set('lastServiceDate', e.target.value)} />
         </div>
 
         <div>
           <label className="block text-sm mb-1">ק"מ בטיפול האחרון</label>
-          <input type="number" className="input" value={form.lastServiceKm} onChange={e => set('lastServiceKm', +e.target.value)} required />
+          <input {...numInput('lastServiceKm')} />
         </div>
 
         <div>
           <label className="block text-sm mb-1">ק"מ עדכני</label>
-          <input type="number" className="input" value={form.currentKm} onChange={e => set('currentKm', +e.target.value)} required />
+          <input {...numInput('currentKm')} />
         </div>
 
         <div>
@@ -161,9 +172,25 @@ export default function CarForm({ token, initial, onSave, onCancel }: Props) {
           </select>
         </div>
 
+        <div className="h-px bg-gray-100" />
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">טסט שנתי</p>
+
         <div>
           <label className="block text-sm mb-1">תאריך טסט הבא</label>
-          <input type="date" className="input" value={form.nextTestDate} onChange={e => set('nextTestDate', e.target.value)} required />
+          <input type="date" className="input" value={form.nextTestDate} onChange={e => set('nextTestDate', e.target.value)} />
+        </div>
+
+        <div className="h-px bg-gray-100" />
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">🔋 ביטוח בטרייה</p>
+
+        <div>
+          <label className="block text-sm mb-1">תאריך החלפת בטרייה אחרונה</label>
+          <input type="date" className="input" value={form.lastBatteryDate} onChange={e => set('lastBatteryDate', e.target.value)} />
+        </div>
+
+        <div>
+          <label className="block text-sm mb-1">ק"מ בהחלפת בטרייה אחרונה</label>
+          <input {...numInput('lastBatteryKm')} />
         </div>
 
         <div className="flex gap-3 pt-2 pb-2">

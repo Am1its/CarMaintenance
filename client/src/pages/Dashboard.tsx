@@ -4,22 +4,35 @@ import { getDashboard } from '../api'
 import CarCard from '../components/CarCard'
 import CarForm from '../components/CarForm'
 
+type CarTask = {
+  id: string
+  text: string
+  isDone: boolean
+  createdAt: string
+}
+
 type Car = {
   id: string
   label: string
-  licensePlate: string
+  licensePlate: string | null
   status: 'ok' | 'approaching' | 'due'
-  daysUntilTest: number
-  kmRemainingService: number
-  daysUntilServiceDate: number
-  lastServiceDate: string
-  lastServiceKm: number
-  currentKm: number
+  daysUntilTest: number | null
+  kmRemainingService: number | null
+  daysUntilServiceDate: number | null
+  lastServiceDate: string | null
+  lastServiceKm: number | null
+  currentKm: number | null
   serviceIntervalMonths: number
   serviceIntervalKm: number
-  nextTestDate: string
+  nextTestDate: string | null
+  lastBatteryDate: string | null
+  lastBatteryKm: number | null
+  daysUntilBattery: number | null
+  kmRemainingBattery: number | null
+  notes: string | null
   photoUrl?: string | null
-  serviceLogs?: { id: string; type: 'SERVICE_DONE' | 'TEST_DONE'; km: number | null; createdAt: string }[]
+  serviceLogs?: { id: string; type: 'SERVICE_DONE' | 'TEST_DONE' | 'BATTERY_DONE'; km: number | null; createdAt: string }[]
+  carTasks?: CarTask[]
 }
 
 type DashboardData = {
