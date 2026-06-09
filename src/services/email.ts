@@ -1,14 +1,18 @@
-import { Resend } from 'resend'
+import nodemailer from 'nodemailer'
 
-let _resend: Resend | null = null
-function getResend() {
-  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY)
-  return _resend
+function getTransporter() {
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASSWORD,
+    },
+  })
 }
 
 type CarAlert = {
   label: string
-  licensePlate: string
+  licensePlate: string | null
   alerts: string[]
 }
 
@@ -35,7 +39,7 @@ export async function sendMaintenanceAlert(
     .map(
       ({ label, licensePlate, alerts }) => `
       <div style="margin-bottom:20px;padding:16px;border:1px solid #e5e7eb;border-radius:8px;direction:rtl;text-align:right;">
-        <strong>${label} (${licensePlate})</strong>
+        <strong>${label}${licensePlate ? ` (${licensePlate})` : ''}</strong>
         <ul style="margin-top:8px;">
           ${alerts.map(a => `<li>${alertToHebrew(a)}</li>`).join('')}
         </ul>
@@ -43,8 +47,8 @@ export async function sendMaintenanceAlert(
     )
     .join('')
 
-  await getResend().emails.send({
-    from: 'תזכורת רכב <no-reply@yourdomain.com>',
+  await getTransporter().sendMail({
+    from: `תזכורת רכב <${process.env.GMAIL_USER}>`,
     to: toEmail,
     subject: 'תזכורת תחזוקת רכב',
     html: `

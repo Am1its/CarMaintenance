@@ -14,7 +14,7 @@ async function runDailyCheck(): Promise<void> {
   for (const dashboard of dashboards) {
     if (!dashboard.ownerEmail) continue
 
-    const carAlerts: { label: string; licensePlate: string; alerts: string[] }[] = []
+    const carAlerts: { label: string; licensePlate: string | null; alerts: string[] }[] = []
 
     for (const car of dashboard.cars) {
       const alerts = getAlertsForCar(car)
@@ -24,7 +24,7 @@ async function runDailyCheck(): Promise<void> {
         data: alerts.map(alertType => ({ carId: car.id, alertType: alertType as any })),
       })
 
-      carAlerts.push({ label: car.label, licensePlate: car.licensePlate, alerts })
+      carAlerts.push({ label: car.label, licensePlate: car.licensePlate ?? null, alerts })
     }
 
     if (carAlerts.length > 0) {
