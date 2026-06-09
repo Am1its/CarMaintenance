@@ -25,6 +25,7 @@ type Car = {
   serviceIntervalMonths: number
   serviceIntervalKm: number
   nextTestDate: string | null
+  trackBattery: boolean
   lastBatteryDate: string | null
   lastBatteryKm: number | null
   daysUntilBattery: number | null
@@ -68,8 +69,9 @@ export default function Dashboard() {
 
   const carForForm = editingCar ? {
     ...editingCar,
-    lastServiceDate: editingCar.lastServiceDate.slice(0, 10),
-    nextTestDate: editingCar.nextTestDate.slice(0, 10),
+    lastServiceDate: editingCar.lastServiceDate?.slice(0, 10) ?? '',
+    nextTestDate: editingCar.nextTestDate?.slice(0, 10) ?? '',
+    lastBatteryDate: editingCar.lastBatteryDate?.slice(0, 10) ?? '',
   } : undefined
 
   const dueCount = data.cars.filter(c => c.status === 'due').length

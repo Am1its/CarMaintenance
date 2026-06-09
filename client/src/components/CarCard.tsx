@@ -26,6 +26,7 @@ type Car = {
   kmRemainingService: number | null
   daysUntilServiceDate: number | null
   serviceIntervalKm: number
+  trackBattery: boolean
   daysUntilBattery: number | null
   kmRemainingBattery: number | null
   notes: string | null
@@ -84,7 +85,7 @@ export default function CarCard({ car, token, onRefresh, onEdit }: Props) {
   const tasks = car.carTasks ?? []
   const activeTaskCount = tasks.filter(t => !t.isDone).length
 
-  const hasBattery = car.daysUntilBattery !== null || car.kmRemainingBattery !== null
+  const hasBattery = car.trackBattery && (car.daysUntilBattery !== null || car.kmRemainingBattery !== null)
   const hasAnyStats = car.daysUntilTest !== null || car.daysUntilServiceDate !== null || car.kmRemainingService !== null
 
   return (
@@ -204,9 +205,11 @@ export default function CarCard({ car, token, onRefresh, onEdit }: Props) {
               <button onClick={handleTestDone} className="flex-1 bg-gray-800 text-white text-xs font-semibold py-2 rounded-xl">
                 ✓ טסט
               </button>
-              <button onClick={handleBatteryDone} className="flex-1 bg-amber-500 text-white text-xs font-semibold py-2 rounded-xl">
-                🔋 בטרייה
-              </button>
+              {car.trackBattery && (
+                <button onClick={handleBatteryDone} className="flex-1 bg-amber-500 text-white text-xs font-semibold py-2 rounded-xl">
+                  🔋 בטרייה
+                </button>
+              )}
             </div>
             {/* Row 2: secondary actions */}
             <div className="flex gap-2">

@@ -19,7 +19,7 @@ async function dashboardOwnsCar(token: string, carId: string): Promise<boolean> 
 const ALLOWED_CAR_FIELDS = [
   'label', 'licensePlate', 'lastServiceDate', 'lastServiceKm',
   'currentKm', 'serviceIntervalMonths', 'serviceIntervalKm', 'nextTestDate',
-  'lastBatteryDate', 'lastBatteryKm', 'notes', 'photoUrl',
+  'trackBattery', 'lastBatteryDate', 'lastBatteryKm', 'notes', 'photoUrl',
 ]
 
 function parseCarData(body: Record<string, any>) {

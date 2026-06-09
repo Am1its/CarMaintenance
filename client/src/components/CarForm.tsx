@@ -11,6 +11,7 @@ type CarInput = {
   serviceIntervalMonths: number
   serviceIntervalKm: number
   nextTestDate: string
+  trackBattery: boolean
   lastBatteryDate: string
   lastBatteryKm: number | null
   photoUrl?: string | null
@@ -26,7 +27,7 @@ type Props = {
 const empty: CarInput = {
   label: '', licensePlate: '', lastServiceDate: '', lastServiceKm: null,
   currentKm: null, serviceIntervalMonths: 6, serviceIntervalKm: 10000, nextTestDate: '',
-  lastBatteryDate: '', lastBatteryKm: null, photoUrl: null,
+  trackBattery: false, lastBatteryDate: '', lastBatteryKm: null, photoUrl: null,
 }
 
 async function compressImage(file: File): Promise<string> {
@@ -81,8 +82,9 @@ export default function CarForm({ token, initial, onSave, onCancel }: Props) {
       serviceIntervalMonths: form.serviceIntervalMonths,
       serviceIntervalKm: form.serviceIntervalKm,
       nextTestDate: form.nextTestDate || null,
-      lastBatteryDate: form.lastBatteryDate || null,
-      lastBatteryKm: form.lastBatteryKm,
+      trackBattery: form.trackBattery,
+      lastBatteryDate: form.trackBattery ? (form.lastBatteryDate || null) : null,
+      lastBatteryKm: form.trackBattery ? form.lastBatteryKm : null,
       photoUrl: form.photoUrl ?? null,
     }
     if (form.id) {
@@ -181,17 +183,32 @@ export default function CarForm({ token, initial, onSave, onCancel }: Props) {
         </div>
 
         <div className="h-px bg-gray-100" />
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">🔋 ביטוח בטרייה</p>
-
-        <div>
-          <label className="block text-sm mb-1">תאריך החלפת בטרייה אחרונה</label>
-          <input type="date" className="input" value={form.lastBatteryDate} onChange={e => set('lastBatteryDate', e.target.value)} />
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">🔋 מעקב בטרייה</p>
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <span className="text-sm text-gray-600">{form.trackBattery ? 'פעיל' : 'כבוי'}</span>
+            <div
+              onClick={() => set('trackBattery', form.trackBattery ? false : true)}
+              className={`w-10 h-6 rounded-full transition-colors ${form.trackBattery ? 'bg-amber-500' : 'bg-gray-200'} relative`}
+            >
+              <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${form.trackBattery ? 'right-1' : 'left-1'}`} />
+            </div>
+          </label>
         </div>
 
-        <div>
-          <label className="block text-sm mb-1">ק"מ בהחלפת בטרייה אחרונה</label>
-          <input {...numInput('lastBatteryKm')} />
-        </div>
+        {form.trackBattery && (
+          <>
+            <div>
+              <label className="block text-sm mb-1">תאריך החלפת בטרייה אחרונה</label>
+              <input type="date" className="input" value={form.lastBatteryDate} onChange={e => set('lastBatteryDate', e.target.value)} />
+            </div>
+
+            <div>
+              <label className="block text-sm mb-1">ק"מ בהחלפת בטרייה אחרונה</label>
+              <input {...numInput('lastBatteryKm')} />
+            </div>
+          </>
+        )}
 
         <div className="flex gap-3 pt-2 pb-2">
           <button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded-lg font-medium">

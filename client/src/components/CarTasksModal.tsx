@@ -113,12 +113,12 @@ export default function CarTasksModal({ car, token, initialTasks, onClose }: Pro
                     🗑
                   </button>
                   <span className="flex-1 text-sm text-gray-800">{task.text}</span>
-                  <input
-                    type="checkbox"
-                    checked={false}
-                    onChange={() => handleToggle(task)}
-                    className="w-4 h-4 flex-shrink-0"
-                  />
+                  <button
+                    onClick={() => handleToggle(task)}
+                    className="text-lg flex-shrink-0 leading-none"
+                  >
+                    🎯
+                  </button>
                 </div>
               ))}
             </div>
@@ -133,7 +133,7 @@ export default function CarTasksModal({ car, token, initialTasks, onClose }: Pro
                 </div>
                 <div className="space-y-1">
                   {doneTasks.map(task => (
-                    <div key={task.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl opacity-50">
+                    <div key={task.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl opacity-60">
                       <button
                         onClick={() => handleDeleteTask(task.id)}
                         className="text-gray-300 hover:text-red-400 text-sm flex-shrink-0"
@@ -141,12 +141,14 @@ export default function CarTasksModal({ car, token, initialTasks, onClose }: Pro
                         🗑
                       </button>
                       <span className="flex-1 text-sm text-gray-400 line-through">{task.text}</span>
-                      <input
-                        type="checkbox"
-                        checked={true}
-                        onChange={() => handleToggle(task)}
-                        className="w-4 h-4 flex-shrink-0"
-                      />
+                      <button
+                        onClick={() => handleToggle(task)}
+                        className="w-5 h-5 rounded-full bg-green-500 flex-shrink-0 flex items-center justify-center hover:bg-green-600 transition-colors"
+                      >
+                        <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
+                          <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
                     </div>
                   ))}
                 </div>

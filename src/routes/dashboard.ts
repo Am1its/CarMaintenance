@@ -50,11 +50,11 @@ router.get('/:token', async (req, res) => {
     const daysToService = svcDate ? daysUntil(svcDate, today) : null
     const daysToTest = car.nextTestDate ? daysUntil(car.nextTestDate, today) : null
 
-    const batteryDate = car.lastBatteryDate
+    const batteryDate = (car.trackBattery && car.lastBatteryDate)
       ? nextServiceDate(car.lastBatteryDate, BATTERY_INTERVAL_MONTHS)
       : null
-    const kmLeftBattery = (car.lastBatteryKm !== null && car.currentKm !== null)
-      ? kmRemaining(car.lastBatteryKm, BATTERY_INTERVAL_KM, car.currentKm)
+    const kmLeftBattery = (car.trackBattery && car.lastBatteryKm !== null && car.currentKm !== null)
+      ? kmRemaining(car.lastBatteryKm!, BATTERY_INTERVAL_KM, car.currentKm!)
       : null
     const daysUntilBattery = batteryDate ? daysUntil(batteryDate, today) : null
 
