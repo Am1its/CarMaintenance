@@ -1,16 +1,8 @@
-# CarMaintenance   🚗
+# CarMaintenance 🚗
 
-A Hebrew RTL mobile-web app for tracking car maintenance — service intervals, annual tests (טסט), and email reminders. Built for Israeli car owners.
+A Hebrew RTL mobile-web app for tracking car maintenance — service intervals, battery health, annual tests (טסט), and email reminders. Built for Israeli car owners.
 
 **Live:** https://carmaintenance-kkfz.onrender.com
-
----
-
-## Screenshots
-
-| כניסה | דשבורד |
-|-------|--------|
-| ![Home](docs/superpowers/image/Home.png) | ![Dashboard](docs/superpowers/image/Dashboard.png) |
 
 ---
 
@@ -18,12 +10,17 @@ A Hebrew RTL mobile-web app for tracking car maintenance — service intervals, 
 
 - Enter your email to get your personal dashboard — no passwords, no sign-up
 - Track multiple cars per dashboard
-- Dual-trigger service alerts: by **date interval** or **KM**, whichever comes first
-- Annual test (טסט) reminders
-- Color-coded status: green (בסדר) / amber (מתקרב) / red (דרוש טיפול)
-- KM progress bar per car
-- Daily email alerts at 8:00 AM via [Resend](https://resend.com)
-- Log service done / test done with one tap
+- **Dual-trigger service alerts** — by date interval or KM, whichever comes first
+- **Battery tracking** — 15,000 km / 1 year intervals, logs each replacement
+- **Annual test (טסט) reminders**
+- **Color-coded status** — green (בסדר) / amber (מתקרב) / red (דרוש טיפול)
+- **KM progress bars** per car
+- **Car photos** — upload from camera or gallery, compressed automatically
+- **Notes & tasks** — per-car notepad and checklist with done/active sections
+- **Event history** — log of every service, test, and battery replacement
+- **Partial data** — save a car with just its name, fill details later
+- **Daily email alerts** at 8:00 AM — sent to every registered user
+- Log service / test / battery done with one tap
 
 ---
 
@@ -34,7 +31,7 @@ A Hebrew RTL mobile-web app for tracking car maintenance — service intervals, 
 | Backend | Node.js + Express v5 + TypeScript |
 | Database | PostgreSQL via [Prisma v5](https://www.prisma.io/) |
 | Frontend | React + Vite + Tailwind CSS v3 |
-| Email | [Resend](https://resend.com) |
+| Email | Nodemailer + Gmail SMTP |
 | Hosting | [Render](https://render.com) (free tier) |
 | DB hosting | [Neon](https://neon.tech) (serverless Postgres) |
 | Tests | Vitest |
@@ -56,15 +53,18 @@ cd CarMaintenance
 npm install
 ```
 
-Create a `.env` file:
+Create a `.env` file (copy from `.env.example`):
 
 ```env
 DATABASE_URL=postgresql://user@localhost:5432/carmaintenance
-RESEND_API_KEY=re_your_key_here
+GMAIL_USER=your-sender@gmail.com
+GMAIL_APP_PASSWORD=xxxx xxxx xxxx xxxx
 ADMIN_SECRET=your_admin_secret
 PORT=3000
 APP_URL=http://localhost:3000
 ```
+
+> **Gmail App Password:** Go to Google Account → Security → 2-Step Verification (enable) → App passwords → create one for this app.
 
 Run the database migration:
 
@@ -75,7 +75,7 @@ npx prisma migrate dev
 Start development servers (two terminals):
 
 ```bash
-# Terminal 1 — backend
+# Terminal 1 — backend (auto-restarts on .ts changes)
 npm run dev:server
 
 # Terminal 2 — frontend
@@ -101,13 +101,22 @@ npm start
 │   ├── cron.ts               # Daily 8am notification job
 │   ├── db.ts                 # Prisma singleton
 │   ├── routes/
-│   │   ├── dashboard.ts      # Email find-or-create, dashboard data
-│   │   └── cars.ts           # CRUD + mark service/test done
+│   │   ├── dashboard.ts      # Email find-or-create, dashboard data + computed stats
+│   │   └── cars.ts           # CRUD, service/test/battery done, task CRUD
 │   └── services/
-│       ├── calculations.ts   # Pure date/KM logic (UTC-safe)
+│       ├── calculations.ts   # Pure date/KM logic (UTC-safe), carStatus
 │       ├── notifications.ts  # Alert rule engine
-│       └── email.ts          # Resend integration
-├── client/                   # React + Vite frontend (Hebrew RTL)
+│       └── email.ts          # Gmail SMTP via Nodemailer, Hebrew templates
+├── client/
+│   └── src/
+│       ├── pages/
+│       │   ├── Landing.tsx       # Email login
+│       │   └── Dashboard.tsx     # Main car list
+│       └── components/
+│           ├── CarCard.tsx        # Card with stats, history, actions
+│           ├── CarForm.tsx        # Add/edit modal
+│           ├── CarTasksModal.tsx  # Notes + tasks modal
+│           └── StatusPill.tsx     # Status badge
 ├── prisma/schema.prisma      # DB schema
 └── tests/                    # Vitest unit tests
 ```
@@ -116,12 +125,16 @@ npm start
 
 ## Deployment
 
-The app is deployed on Render (free tier) with a Neon PostgreSQL database.
+Deployed on Render (free tier) + Neon PostgreSQL.
 
-Since Render free services sleep after inactivity, [cron-job.org](https://cron-job.org) pings the server at **07:55** every day to wake it before the 8:00 AM email cron fires.
+Since Render free services sleep after inactivity, [cron-job.org](https://cron-job.org) pings `https://carmaintenance-kkfz.onrender.com/api/health` at **07:55** every day to wake it before the 8:00 AM email cron fires.
 
-Run migration on Neon:
+### Required env vars in Render
 
-```bash
-DATABASE_URL=<neon_url> npx prisma migrate deploy
-```
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | Neon PostgreSQL connection string |
+| `GMAIL_USER` | Gmail address to send alerts from |
+| `GMAIL_APP_PASSWORD` | 16-char App Password for that Gmail account |
+| `ADMIN_SECRET` | Secret for the `/admin` route |
+| `APP_URL` | `https://carmaintenance-kkfz.onrender.com` |
