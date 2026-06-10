@@ -30,6 +30,11 @@ function alertToHebrew(type: string): string {
   return map[type] ?? type
 }
 
+function alertColor(type: string): string {
+  const red = ['TEST_OVERDUE', 'SERVICE_DATE_OVERDUE', 'SERVICE_KM_300']
+  return red.includes(type) ? '#dc2626' : '#d97706'
+}
+
 export async function sendMaintenanceAlert(
   toEmail: string,
   dashboardUrl: string,
@@ -38,11 +43,12 @@ export async function sendMaintenanceAlert(
   const carSections = carAlerts
     .map(
       ({ label, licensePlate, alerts }) => `
-      <div style="margin-bottom:20px;padding:16px;border:1px solid #e5e7eb;border-radius:8px;direction:rtl;text-align:right;">
-        <strong>${label}${licensePlate ? ` (${licensePlate})` : ''}</strong>
-        <ul style="margin-top:8px;">
-          ${alerts.map(a => `<li>${alertToHebrew(a)}</li>`).join('')}
-        </ul>
+      <div style="margin-bottom:16px;padding:16px;border:1px solid #e5e7eb;border-radius:8px;direction:rtl;text-align:right;">
+        <div style="font-weight:600;margin-bottom:10px;">${label}${licensePlate ? ` (${licensePlate})` : ''}</div>
+        ${alerts.map(a => `
+          <div style="padding:3px 0;font-size:14px;">
+            <span style="color:${alertColor(a)};margin-left:6px;">●</span>${alertToHebrew(a)}
+          </div>`).join('')}
       </div>`
     )
     .join('')
@@ -52,11 +58,11 @@ export async function sendMaintenanceAlert(
     to: toEmail,
     subject: 'תזכורת תחזוקת רכב',
     html: `
-      <div style="font-family:Arial,sans-serif;direction:rtl;text-align:right;max-width:600px;margin:0 auto;">
-        <h2>תזכורת תחזוקת רכב</h2>
-        <p>להלן עדכון על הרכבים הדורשים תשומת לבך:</p>
+      <div style="font-family:Arial,sans-serif;direction:rtl;text-align:right;max-width:600px;margin:0 auto;color:#111827;">
+        <h2 style="margin-bottom:4px;">תזכורת תחזוקת רכב</h2>
+        <p style="margin-top:0;margin-bottom:20px;color:#6b7280;">להלן עדכון על הרכבים הדורשים תשומת לבך:</p>
         ${carSections}
-        <a href="${dashboardUrl}" style="display:inline-block;margin-top:16px;padding:10px 20px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none;">עדכן פרטים</a>
+        <a href="${dashboardUrl}" style="display:inline-block;margin-top:8px;padding:10px 20px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none;font-size:14px;">עדכן פרטים</a>
       </div>
     `,
   })

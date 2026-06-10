@@ -11,7 +11,7 @@ dotenv.config()
 const app = express()
 app.use(express.json({ limit: '10mb' }))
 
-app.get('/api/health', (_req, res) => res.json({ ok: true }))
+app.get('/api/health', (_req, res) => res.send('ok'))
 
 app.use('/api/admin', adminRoutes)
 app.use('/api/d', dashboardRoutes)
