@@ -13,6 +13,18 @@ dotenv.config()
 
 async function main(): Promise<void> {
   console.log(`[daily-check] starting at ${new Date().toISOString()}`)
+
+  // TEMP diagnostic — verify what the runner actually receives. Never prints
+  // the password itself, only its length and a whitespace check. Remove once
+  // the Gmail auth is confirmed working.
+  const user = process.env.GMAIL_USER ?? ''
+  const pass = process.env.GMAIL_APP_PASSWORD ?? ''
+  console.log(`[daily-check] GMAIL_USER="${user}" (len ${user.length})`)
+  console.log(
+    `[daily-check] GMAIL_APP_PASSWORD len=${pass.length}, ` +
+      `hasWhitespace=${/\s/.test(pass)}, trimmedLen=${pass.trim().length}`,
+  )
+
   await runDailyCheck()
   console.log('[daily-check] completed successfully')
 }
