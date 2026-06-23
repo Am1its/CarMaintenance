@@ -1,0 +1,61 @@
+name: Daily Maintenance Email
+
+# Sends the daily maintenance alert emails by running runDailyCheck() directly
+# against Neon (Postgres) + Gmail SMTP. This intentionally does NOT call the
+# Render web service — Render's free tier sleeps and cold-starts unreliably,
+# which was causing the 8am 503/429 failures and missed emails.
+#
+# GitHub Actions cron is in UTC and does not observe DST, but Israel does
+# (IDT = UTC+3 in summer, IST = UTC+2 in winter). We schedule both 05:00 and
+# 06:00 UTC and let the gate step run the check only when it is 08:00 in
+# Israel, so exactly one run fires at 08:00 local time year-round.
+
+on:
+  schedule:
+    - cron: '0 5 * * *'   # 08:00 Israel summer time (IDT)
+    - cron: '0 6 * * *'   # 08:00 Israel winter time (IST)
+  workflow_dispatch:       # manual trigger for testing (bypasses the time gate)
+
+jobs:
+  daily-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gate on 08:00 Israel time
+        id: gate
+        run: |
+          HOUR=$(TZ='Asia/Jerusalem' date +%H)
+          echo "Current Israel hour: $HOUR"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$HOUR" = "08" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Not 08:00 in Israel — skipping this scheduled run."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.gate.outputs.run == 'true'
+        run: npm ci
+
+      - name: Generate Prisma client
+        if: steps.gate.outputs.run == 'true'
+        run: npx prisma generate
+
+      - name: Run daily maintenance check
+        if: steps.gate.outputs.run == 'true'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          APP_URL: ${{ secrets.APP_URL }}
+        run: npx ts-node --transpile-only src/scripts/dailyCheck.ts
